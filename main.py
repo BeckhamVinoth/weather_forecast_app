@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.express as px
+from weather_api import get_data
 
 
 st.title('Weather Forecast App 🌦🌩☀')
@@ -15,15 +16,21 @@ else:
 
 st.subheader(sub_header_text)
 
+if place:
+    try:
+        filtered_data = get_data(place, days)
+        if option == "Temperature":
+            temperatures = [dict["main"]["temp"] for dict in filtered_data]
+            temperatures = [round(temp - 273.15, 2) for temp in temperatures]
+            dates = [dict["dt_txt"] for dict in filtered_data]
+            figure = px.line(x=dates, y=temperatures, labels={"x": "Date", "y": "Temperature (C)"})
+            st.plotly_chart(figure)
 
-def get_data(days):
-    dates_val = ["2022-25-10", "2022-26-10", "2022-27-10"]
-    temperature_val = [10, 11, 15]
-    return dates_val, temperature_val
-
-
-dates, temperature = get_data(days)
-
-figure = px.line(x=dates, y=temperature, labels={"x": "Date", "y": "Temperature (C)"})
-
-st.plotly_chart(figure)
+        if option == "Sky":
+            images = {"Clear": "images/clear.png", "Clouds": "images/cloud.png", "Rain": "images/rain.png", "Snow": "images/snow.png"}
+            sky_conditions = [dict["weather"][0]["main"] for dict in filtered_data]
+            image_paths = [images[condition] for condition in sky_conditions]
+            print(sky_conditions)
+            st.image(image_paths, width=115)
+    except KeyError:
+        st.warning("This place does not exists !!!")
